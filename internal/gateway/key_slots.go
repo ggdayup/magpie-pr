@@ -58,6 +58,7 @@ var keySlotRoutes = map[string]keySlotKind{
 	"POST /api/chat":                keySlotLazy,
 	"POST /api/generate":            keySlotLazy,
 	"POST /v1beta/models/{call...}": keySlotLazy,
+	"POST /v1beta/interactions":     keySlotEager,
 	CodexPath + "/":                 keySlotLazy,
 	"POST /v1/systemone":            keySlotEager,
 	"POST /v1" + AlphaSearchPath:    keySlotEager,

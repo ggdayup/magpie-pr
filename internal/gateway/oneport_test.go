@@ -27,7 +27,7 @@ func TestClientPathCoversHandler(t *testing.T) {
 		if i := strings.IndexByte(pat, ' '); i >= 0 {
 			pat = pat[i+1:]
 		}
-		p := strings.NewReplacer("{$}", "", "{id...}", "x", "{call...}", "x", "{id}", "x", "{token}", "x", "{name}", "x", "{agent}", "x").Replace(pat)
+		p := strings.NewReplacer("{$}", "", "{id...}", "x", "{call...}", "x", "{session...}", "x", "{name...}", "x", "{id}", "x", "{token}", "x", "{name}", "x", "{agent}", "x").Replace(pat)
 		n++
 		stays := p == "/" || strings.HasPrefix(p, "/api/") || strings.HasPrefix(p, "/_magpie/") || strings.HasPrefix(p, ArtifactPagePath)
 		if ClientPath(p) == stays {

@@ -24,7 +24,7 @@ func (s *Server) Front() http.Handler {
 // served on a port of its own passes on to the gateway: everything an
 // agent or an SDK calls with the gateway as its base URL.
 var clientPrefixes = []string{
-	"/v1", "/v1beta",
+	"/v1", "/v1beta", "/upload/v1beta",
 	"/models", "/chat/completions", "/responses", "/messages",
 	"/images", "/embeddings", "/rerank", "/decisions", "/audio", "/videos", "/realtime",
 	"/muse-code/models", CodexPath, AlphaSearchPath, "/mcp",

@@ -4016,6 +4016,7 @@ application:
   public_path:
     - /v1
     - /v1beta
+    - /upload/v1beta
     - /models
     - /chat/completions
     - /responses

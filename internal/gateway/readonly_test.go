@@ -67,7 +67,11 @@ var readOnlyRefused = []string{
 	SearchMCPPath, VisionMCPPath, ImageMCPPath, ImageMCPFiles + "{name}",
 	BrowserMCPPath, MemoryMCPPath, SessionsMCPPath, ArtifactsMCPPath, "GET " + ArtifactPagePath + "{ref}", "GET " + ArtifactPagePath + "{ref}/{path...}", "GET " + BrowserExtensionPath, "GET " + BrowserStatusPath, ToolsMCPPath, ToolsMCPOne + "{plugin}",
 	HubMCPPath + "{agent}", HubMCPAll, CodexPath + "/", "GET " + CodexCatalogPath,
-	"GET /v1beta/models", "POST /v1beta/models/{call...}", "/",
+	"GET /v1beta/models", "POST /v1beta/models/{call...}",
+	"POST /v1beta/interactions", "GET /v1beta/interactions/{id}", "POST /v1beta/interactions/{id}/cancel", "DELETE /v1beta/interactions/{id}",
+	"POST /upload/v1beta/files", "POST /upload/v1beta/files/{session...}", "PUT /upload/v1beta/files/{session...}",
+	"GET /v1beta/files", "POST /v1beta/files:register", "GET /v1beta/files/{name...}", "DELETE /v1beta/files/{name...}", "GET /v1beta/generatedFiles",
+	"/",
 }
 
 var wildcard = regexp.MustCompile(`\{[a-z]+(\.\.\.)?\}`)

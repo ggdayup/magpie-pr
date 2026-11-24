@@ -32,6 +32,10 @@ var keySlotFree = []string{
 	HubMCPPath + "{agent}", HubMCPAll, "/", "POST " + joinData, AdminPath,
 	// the chat page's files are kept in magpie, never sent to a model
 	"POST " + ChatPagePath + "/anthropic/v1/files", "DELETE " + ChatPagePath + "/anthropic/v1/files/{id}",
+	// Gemini Interactions cancel/delete and Files API uploads/management
+	"POST /v1beta/interactions/{id}/cancel", "DELETE /v1beta/interactions/{id}",
+	"POST /upload/v1beta/files", "POST /upload/v1beta/files/{session...}", "PUT /upload/v1beta/files/{session...}",
+	"POST /v1beta/files:register", "DELETE /v1beta/files/{name...}",
 }
 
 // keySlotGets are the GETs that spend as a chat does, so a key's

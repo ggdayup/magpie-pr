@@ -3630,6 +3630,15 @@ classifier) get none. `TestModelSystemAfterTheAgentsPrompt`,
 `TestModelSystemReachesAPluginsModel` in
 [`model_system_test.go`](../../internal/gateway/model_system_test.go).
 
+## Gemini Interactions and Files APIs
+
+Magpie serves Google's Gemini Interactions API (`/v1beta/interactions`, `GET/DELETE /v1beta/interactions/{id}`, `POST /v1beta/interactions/{id}/cancel`) and Gemini Files API (`POST /upload/v1beta/files`, `POST/PUT /upload/v1beta/files/{session...}`, `GET /v1beta/files`, `POST /v1beta/files:register`, `GET/DELETE /v1beta/files/{name...}`, `GET /v1beta/generatedFiles`) in [`gemini_interactions.go`](../../internal/gateway/gemini_interactions.go) and [`gemini_files.go`](../../internal/gateway/gemini_files.go).
+
+- **Eligible upstreams.** `geminiInteractionsBase` selects enabled Gemini Developer API providers (the built-in `google` preset with `/openai` stripped, explicit Gemini base URLs, and Remote magpie instances at `/v1beta`) and excludes plugins, OAuth/subscription accounts, and Vertex AI.
+- **Model, agent, and group routing.** `POST /v1beta/interactions` supports both `model` and `agent` payloads with full model/group resolution, disabled-model checks, gateway key model and account restrictions, multi-key and group failover before headers are written, privacy masking (failing closed) with placeholder restoration, `X-Magpie-Provider` / `X-Magpie-Model` headers, SSE streaming, and usage extraction (`total_input_tokens`, `total_cached_tokens`, `total_output_tokens`, `total_thought_tokens`) recorded under `Operation: "interactions"`.
+- **Affinity and resumable upload proxy.** Returned interaction IDs and uploaded file names are cached in `Server.geminiState` (bounded TTL/cap maps) by provider and key mark so `previous_interaction_id`, `GET`/`POST /cancel`/`DELETE /v1beta/interactions/{id}`, and `GET`/`DELETE /v1beta/files/{name...}` stay on the owning provider and key. On resumable `POST /upload/v1beta/files` (`X-Goog-Upload-Protocol: resumable`, `start`), upstream `X-Goog-Upload-Url` is rewritten to `<scheme>://<host>/upload/v1beta/files/<token>` and chunk uploads stream directly to the upstream session URL without buffering the body in memory.
+- **One-port and guards.** `/upload/v1beta` is listed in `clientPrefixes` ([`oneport.go`](../../internal/gateway/oneport.go)) and the LazyCat `public_path` list ([`reference.md`](../reference.md)). Path segments `{id}` and `{name...}` reject traversal (`..`, backslashes, schemes, control bytes).
+
 ## Verification
 
 ```sh

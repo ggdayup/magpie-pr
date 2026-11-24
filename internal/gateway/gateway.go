@@ -640,6 +640,8 @@ type Server struct {
 	sockets clientSockets
 	// realtimes are the Realtime API sessions being served (realtime.go)
 	realtimes realtimeSessions
+	// Gemini Interactions & Files affinity and resumable upload sessions
+	geminiState
 	// what it serves other computers TLS with, nil without (tls.go)
 	tls *tlsServer
 	// the images described for models that can't see them (vision.go);
@@ -1269,8 +1271,20 @@ func (s *Server) routes() *routeMux {
 	mux.HandleFunc("GET "+CodexCatalogPath, s.codexCatalog)
 	mux.HandleFunc("GET /v1beta/models", s.geminiModels)
 	mux.HandleFunc("POST /v1beta/models/{call...}", s.gemini)
+	mux.HandleFunc("POST /v1beta/interactions", s.geminiInteractionsCreate)
+	mux.HandleFunc("GET /v1beta/interactions/{id}", s.geminiInteractionsGet)
+	mux.HandleFunc("POST /v1beta/interactions/{id}/cancel", s.geminiInteractionsCancel)
+	mux.HandleFunc("DELETE /v1beta/interactions/{id}", s.geminiInteractionsDelete)
+	mux.HandleFunc("POST /upload/v1beta/files", s.geminiFilesUploadStart)
+	mux.HandleFunc("POST /upload/v1beta/files/{session...}", s.geminiFilesUploadChunk)
+	mux.HandleFunc("PUT /upload/v1beta/files/{session...}", s.geminiFilesUploadChunk)
+	mux.HandleFunc("GET /v1beta/files", s.geminiFilesList)
+	mux.HandleFunc("POST /v1beta/files:register", s.geminiFilesRegister)
+	mux.HandleFunc("GET /v1beta/files/{name...}", s.geminiFilesGet)
+	mux.HandleFunc("DELETE /v1beta/files/{name...}", s.geminiFilesDelete)
+	mux.HandleFunc("GET /v1beta/generatedFiles", s.geminiGeneratedFilesList)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		writeError(w, provider.Chat, http.StatusNotFound, "magpie serves /v1/chat/completions, /v1/responses, /v1/messages, /v1/systemone, /v1/images/generations, /v1/images/edits, /v1/videos, /v1/embeddings, /v1/rerank, /v1/decisions, /v1/audio/transcriptions, /v1/audio/translations, /v1/audio/speech, /v1/realtime (WebSocket) and /v1beta/models/*")
+		writeError(w, provider.Chat, http.StatusNotFound, "magpie serves /v1/chat/completions, /v1/responses, /v1/messages, /v1/systemone, /v1/images/generations, /v1/images/edits, /v1/videos, /v1/embeddings, /v1/rerank, /v1/decisions, /v1/audio/transcriptions, /v1/audio/translations, /v1/audio/speech, /v1/realtime (WebSocket), /v1beta/models/*, /v1beta/interactions, /v1beta/files and /upload/v1beta/files")
 	})
 	return mux
 }
@@ -1299,7 +1313,7 @@ var catalogSize stamped[struct{}, int]
 
 func (s *Server) info(w http.ResponseWriter, r *http.Request) {
 	out := map[string]any{"name": "magpie", "version": Version, "models": catalogSize.get(struct{}{}, func() int { return len(provider.Catalog()) }), "window": Window,
-		"apis": []string{"/v1/chat/completions", "/v1/responses", "/v1/messages", "/v1/systemone", "/v1beta/models/{model}:generateContent", "/v1/images/generations", "/v1/images/edits", "/v1/videos", NativePath + "{provider}/{path}", "/v1/embeddings", "/v1/rerank", "/v1/decisions", "/v1/audio/transcriptions", "/v1/audio/translations", "/v1/audio/speech", "/v1/realtime", "/v1/magpie/quotas", "/v1/magpie/quotas/history", AccountsPath, "/v1/magpie/usage", "/v1/magpie/usage/requests", "/v1/magpie/route", StatuslinePath, "/v1/magpie/trace", OwnMCPPath, SearchMCPPath, VisionMCPPath, MemoryMCPPath, SessionsMCPPath, ArtifactsMCPPath, ImageMCPPath, BrowserMCPPath, ToolsMCPPath, HubMCPAll, HubMCPPath + "{agent}"}}
+		"apis": []string{"/v1/chat/completions", "/v1/responses", "/v1/messages", "/v1/systemone", "/v1beta/models/{model}:generateContent", "/v1beta/interactions", "/v1beta/files", "/upload/v1beta/files", "/v1/images/generations", "/v1/images/edits", "/v1/videos", NativePath + "{provider}/{path}", "/v1/embeddings", "/v1/rerank", "/v1/decisions", "/v1/audio/transcriptions", "/v1/audio/translations", "/v1/audio/speech", "/v1/realtime", "/v1/magpie/quotas", "/v1/magpie/quotas/history", AccountsPath, "/v1/magpie/usage", "/v1/magpie/usage/requests", "/v1/magpie/route", StatuslinePath, "/v1/magpie/trace", OwnMCPPath, SearchMCPPath, VisionMCPPath, MemoryMCPPath, SessionsMCPPath, ArtifactsMCPPath, ImageMCPPath, BrowserMCPPath, ToolsMCPPath, HubMCPAll, HubMCPPath + "{agent}"}}
 	// which process serves, for another magpie on this computer to name it
 	// on its Routing page (#2606); not told to another machine
 	if local(r) {
